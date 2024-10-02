@@ -43,8 +43,8 @@ int main()
     int num_elements = nx * ny;
 
     float *h_f = new float[num_elements];
-    float *h_fx = new float[num_elements - 1];
-    float *h_fy = new float[num_elements -1];
+    float *h_f_prime_x = new float[num_elements - 1];
+    float *h_f_prime_y = new float[num_elements -1];
 
     for (int j = 0; j < ny; ++j)
     {
@@ -67,13 +67,13 @@ int main()
     cudaMemcpy(d_f, h_f, num_elements * sizeof(float), cudaMemcpyHostToDevice);
 
     dim3 blockSize(32, 32);
-    dim3 gridSize((nx + blockSize.x - 2) / blockSize.x,
-                  (ny + blockSize.y - 2) / blockSize.y);
+    dim3 gridSize((nx + blockSize.x - 1) / blockSize.x,
+                  (ny + blockSize.y - 1) / blockSize.y);
 
     compute_partial_derivatives<<<gridSize, blockSize>>>(d_f, d_f_prime_x, d_f_prime_y, delta_x, delta_y, nx, ny);
 
-    cudaMemcpy(h_fx, d_f_prime_x, (num_elements - 1) * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_fy, d_f_prime_y, (num_elements - 1) * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_f_prime_x, d_f_prime_x, (num_elements - 1) * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_f_prime_y, d_f_prime_y, (num_elements - 1) * sizeof(float), cudaMemcpyDeviceToHost);
 
     float max_error = 0;
     for (int j = 0; j < ny - 1; ++j)
@@ -83,10 +83,10 @@ int main()
         {
             float x = i * delta_x;
             int idx = j * nx + i;
-            float error_x = fabs(f_prime_x(x, y) - h_fx[idx]);
+            float error_x = fabs(f_prime_x(x, y) - h_f_prime_x[idx]);
             if (error_x > max_error)
                 max_error = error_x;
-            float error_y = fabs(f_prime_y(x, y) - h_fy[idx]);
+            float error_y = fabs(f_prime_y(x, y) - h_f_prime_y[idx]);
             if (error_y > max_error)
                 max_error = error_y;
         }
@@ -97,8 +97,8 @@ int main()
     cudaFree(d_f_prime_x);
     cudaFree(d_f_prime_y);
     delete[] h_f;
-    delete[] h_fx;
-    delete[] h_fy;
+    delete[] h_f_prime_x;
+    delete[] h_f_prime_y;
 
     return 0;
 }
