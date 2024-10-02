@@ -1,0 +1,2 @@
+nvcc compute_first_partial_derivatives.cu -o compute_first_partial_derivatives
+
