@@ -1,0 +1,1 @@
+nvprof ./compute_integral
